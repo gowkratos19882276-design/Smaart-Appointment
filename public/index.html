@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Medical Chatbot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --panel-2: #0b1020;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --primary: #5b9cff;
+      --primary-2: #437ee0;
+      --bot: #1f2937;
+      --user: #1e3a8a;
+      --accent: #10b981;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: radial-gradient(1200px 800px at 80% -10%, #18306e22, transparent),
+                   radial-gradient(1000px 600px at -10% 110%, #185b3622, transparent), var(--bg);
+      color: var(--text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh; display: grid; place-items: center; padding: 24px;
+    }
+    .app {
+      width: 100%; max-width: 900px; display: grid; grid-template-columns: 360px 1fr; gap: 16px;
+    }
+    @media (max-width: 860px) { .app { grid-template-columns: 1fr; } }
+    .sidebar { background: linear-gradient(180deg, var(--panel), var(--panel-2)); border: 1px solid #1f2937; border-radius: 16px; padding: 20px; }
+    .title { font-weight: 700; font-size: 18px; margin: 0 0 12px; }
+    .desc { color: var(--muted); font-size: 14px; margin: 0 0 16px; }
+    .card { background: #0b1222; border: 1px solid #1b2545; padding: 12px; border-radius: 12px; margin-bottom: 12px; }
+    .chip { display: inline-block; padding: 4px 10px; border-radius: 999px; background: #0e1a36; color: #9bb6ff; font-size: 12px; border: 1px solid #223b7a; }
+
+    .chat {
+      background: linear-gradient(180deg, var(--panel), var(--panel-2)); border: 1px solid #1f2937; border-radius: 16px;
+      display: grid; grid-template-rows: 1fr auto; height: 80vh; min-height: 540px; overflow: hidden;
+    }
+    .messages { padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+    .msg { display: flex; gap: 12px; max-width: 85%; }
+    .msg.bot { align-self: flex-start; }
+    .msg.user { align-self: flex-end; flex-direction: row-reverse; }
+    .avatar { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; }
+    .avatar.bot { background: #0f172a; border: 1px solid #1f2937; color: #93c5fd; }
+    .avatar.user { background: #111827; border: 1px solid #1f2937; color: #c4b5fd; }
+    .bubble { padding: 12px 14px; border-radius: 14px; border: 1px solid #1f2937; font-size: 14px; line-height: 1.4; white-space: pre-wrap; }
+    .bot .bubble { background: #0b1222; }
+    .user .bubble { background: #0e1a36; border-color: #223b7a; }
+    .btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .btn { background: #0b1222; color: var(--text); border: 1px solid #1f2937; padding: 8px 12px; border-radius: 10px; cursor: pointer; font-size: 14px; }
+    .btn:hover { border-color: #334155; }
+    .btn.primary { background: linear-gradient(180deg, var(--primary), var(--primary-2)); border: none; color: white; }
+    .btn.success { background: linear-gradient(180deg, #16a34a, #15803d); border: none; color: white; }
+
+    .inputbar { display: flex; gap: 10px; padding: 12px; border-top: 1px solid #1f2937; background: #0a0f1e; }
+    .text { flex: 1; background: #0b1222; color: var(--text); border: 1px solid #1f2937; border-radius: 10px; padding: 12px 14px; font-size: 14px; }
+    .send { background: var(--primary); color: white; border: none; border-radius: 10px; padding: 0 16px; font-weight: 600; cursor: pointer; }
+    .send:disabled { opacity: 0.6; cursor: not-allowed; }
+    /* Mic button styles */
+    .mic {
+      width: 44px; height: 40px; border-radius: 10px; border: 1px solid #1f2937; background: #0b1222; color: #e5e7eb; cursor: pointer;
+      display: grid; place-items: center; font-size: 18px; transition: box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+    }
+    .mic:hover { border-color: #334155; }
+    .mic.recording {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(16,185,129,0.2), 0 0 12px rgba(16,185,129,0.35);
+      background: #0d1b2a;
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.5); }
+      70% { box-shadow: 0 0 0 12px rgba(16,185,129,0); }
+      100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="sidebar">
+      <div class="title">Medical Chatbot</div>
+      <p class="desc">Book appointments or ask general medical questions powered by a local AI model.</p>
+      <div class="card">
+        <div class="chip">How it works</div>
+        <ul>
+          <li>Choose Book Appointment or General Chat</li>
+          <li>For booking: pick doctor → date → time → enter email</li>
+          <li>We send confirmation by email</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="chip">Voice Receptionist</div>
+        <p style="margin:8px 0 10px;color:var(--muted);font-size:13px;">Talk to our AI receptionist powered by Vapi. Click Start to begin.</p>
+        <div style="display:flex; gap:8px;">
+          <button id="startCall" class="btn primary">🎤 Start Call</button>
+          <button id="endCall" class="btn" style="display:none;">⏹ End</button>
+        </div>
+        <audio id="remoteAudio" autoplay playsinline style="width:100%; margin-top:8px;"></audio>
+      </div>
+    </div>
+
+    <div class="chat">
+      <div id="messages" class="messages"></div>
+      <div class="inputbar">
+        <input id="input" class="text" type="text" placeholder="Type a message..." />
+        <button id="mic" class="mic" title="Speak"><span aria-hidden="true">🎤</span></button>
+        <button id="send" class="send">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vapi Web SDK via ESM CDN (browser-compatible). We expose it as window.Vapi -->
+  <script type="module">
+    try {
+      const mod = await import('https://esm.sh/@vapi-ai/web');
+      const Vapi = mod && (mod.default || mod.Vapi || mod);
+      if (Vapi) {
+        window.Vapi = Vapi;
+        window.VapiWeb = Vapi;
+        window.__VAPI_READY__ = true;
+        console.log('[Vapi] ESM loaded', typeof Vapi);
+      } else {
+        console.error('[Vapi] ESM module loaded but no export found');
+        window.__VAPI_READY__ = false;
+      }
+    } catch (e) {
+      console.error('[Vapi] Failed to load ESM module', e);
+      window.__VAPI_READY__ = false;
+    }
+  </script>
+  <!-- Cache-bust chat.js so browser picks up latest changes -->
+  <script src="./chat.js?v=14"></script>
+</body>
+</html>
+
+
